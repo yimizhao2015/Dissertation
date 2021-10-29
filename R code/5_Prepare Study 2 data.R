@@ -41,8 +41,14 @@ table(is.na(dt2$Earnings))
 # 18572  4169 
 
 #------------------------------------------------------------------------
-## Prepare study 2 Multiple Implication data (employed respondents within 26 countries reported earnings info, impute missing earnings)
-  
+## subset original survey data (all employed with a reasonable hourly earnings), for sample descriptive summary
+dt3 <- dt2 %>% filter(!is.na(Earnings)) %>% select(Weight:PVLITNUM10)
 
-write.csv(dt2,"Data Analysis/Clean Datasets/Study2_piaac.csv", row.names = F )
+summary(dt3$Earnings)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.26    7.03   11.67   14.09   17.78  491.62 
+
+
+write.csv(dt2,"Data Analysis/Clean Datasets/Study2_piaac.csv", row.names = F)
+write.csv(dt3,"Data Analysis/Clean Datasets/Study2_piaac_for sample summary.csv", row.names = F)
 
