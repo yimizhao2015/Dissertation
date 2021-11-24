@@ -39,12 +39,16 @@ mincer.mod <- lm(LogEarnings ~ Schooling + Experience + I(Experience^2), data = 
 summary(mincer.mod)
 exp(coef(mincer.mod))
 confint(mincer.mod)
+AIC(mincer.mod)
 
 # refined standard Mincer earnings modeling
 mincer.mod2 <- lm(LogEarnings ~ Schooling + Experience, data = dt)
 summary(mincer.mod2)
 exp(coef(mincer.mod2))
 confint(mincer.mod2)
+AIC(mincer.mod2)
+
+anova(mincer.mod, mincer.mod2)
 
 ##################################################################
 #################### HLM Model Fitting ###########################
