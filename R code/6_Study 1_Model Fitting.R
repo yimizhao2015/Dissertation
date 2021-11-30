@@ -156,7 +156,27 @@ formu.lnm6.b.ref = " + Gender + Age + STEM + Education + Training + Experience +
 lnm6 = study1Func(a = pvlitnum, b = formu.lnm6.b, c = pvlitnum, d = formu.lnm6.d)
 lnm6_ref = study1Func(a = pvlitnum, b = formu.lnm6.b.ref, c = pvlitnum, d = formu.lnm6.d)
 
-#as.formula(paste("Employed ~ 1 + ", pvlitnum[2], formu.lnm6.b.ref, pvlitnum[2], formu.lnm6.d, sep = ""))
+## 2.7 Random intercept and random slope (1 + PVLITNUM + Gender + Training|Country)
+#refined (remove all level 2 variables)
+formu.lnm7.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.lnm7.d = " + Gender + Training|Country)"
+formu.lnm7.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+formu.lnm7.b.ref2 = " + Gender + Age + STEM + Education + Training + Experience + Occupation + HSCompletion + (1 + " #keep HSCompletion
+
+lnm7 = study1Func(a = pvlitnum, b = formu.lnm7.b, c = pvlitnum, d = formu.lnm7.d)
+lnm7_ref = study1Func(a = pvlitnum, b = formu.lnm7.b.ref, c = pvlitnum, d = formu.lnm7.d)
+lnm7_ref2 = study1Func(a = pvlitnum, b = formu.lnm7.b.ref2, c = pvlitnum, d = formu.lnm7.d)
+
+## 2.8 Random intercept and random slope (1 + PVLITNUM + STEM + Training|Country)
+#refined (remove all level 2 variables)
+formu.lnm8.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.lnm8.d = " + STEM + Training|Country)"
+formu.lnm8.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+
+lnm8 = study1Func(a = pvlitnum, b = formu.lnm8.b, c = pvlitnum, d = formu.lnm8.d)
+lnm8_ref = study1Func(a = pvlitnum, b = formu.lnm8.b.ref, c = pvlitnum, d = formu.lnm8.d)
+
+#as.formula(paste("Employed ~ 1 + ", pvlitnum[2], formu.lnm7.b.ref, pvlitnum[2], formu.lnm7.d, sep = ""))
 
 #---------------------------------------------------------------
 ## (3) PSTRE GLMM modeling
@@ -214,7 +234,27 @@ formu.psm6.b.ref = " + Gender + Age + STEM + Education + Training + Experience +
 psm6 = study1Func(a = pvps, b = formu.psm6.b, c = pvps, d = formu.psm6.d)
 psm6_ref = study1Func(a = pvps, b = formu.psm6.b.ref, c = pvps, d = formu.psm6.d)
 
-#as.formula(paste("Employed ~ 1 + ", pvps[1], formu.psm4.b, pvps[1], formu.psm4.d, sep = ""))
+## 3.7 Random intercept and random slope (1 + PVPSL + Gender + Training|Country)
+#refined (remove all level 2 variables)
+formu.psm7.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.psm7.d = " + Gender + Training|Country)"
+formu.psm7.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+
+psm7 = study1Func(a = pvps, b = formu.psm7.b, c = pvps, d = formu.psm7.d)
+psm7_ref = study1Func(a = pvps, b = formu.psm7.b.ref, c = pvps, d = formu.psm7.d)
+
+## 3.8 Random intercept and random slope (1 + PVPSL + STEM + Training|Country)
+#refined (remove all level 2 variables)
+formu.psm8.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.psm8.d = " + STEM + Training|Country)"
+formu.psm8.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+formu.psm8.b.ref2 = " + Gender + Age + STEM + Education + Training + Experience + Occupation + Mobile + (1 + " #keep Mobile
+
+psm8 = study1Func(a = pvps, b = formu.psm8.b, c = pvps, d = formu.psm8.d)
+psm8_ref = study1Func(a = pvps, b = formu.psm8.b.ref, c = pvps, d = formu.psm8.d)
+psm8_ref2 = study1Func(a = pvps, b = formu.psm8.b.ref2, c = pvps, d = formu.psm8.d)
+
+#as.formula(paste("Employed ~ 1 + ", pvps[1], formu.psm7.b.ref, pvps[1], formu.psm7.d, sep = ""))
 
 #-------------------------------------------
 # test models
@@ -233,32 +273,32 @@ psm6_ref = study1Func(a = pvps, b = formu.psm6.b.ref, c = pvps, d = formu.psm6.d
 
  # for LITNUM
 tmod <- glmer(Employed ~ 1 + PVLITNUM1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
-              GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + PVLITNUM1_s + Gender + STEM|Country),
+              GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + PVLITNUM1_s + STEM + Training|Country),
               data = dt, family = binomial(link = "logit"), control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 summary(tmod)
 
 
-tmod.ref <- glmer(Employed ~ 1 + PVLITNUM1_s + Gender + Age + Education + Training + Experience + Occupation +
-                  (1 + PVLITNUM1_s + Gender + STEM|Country),
+tmod.ref <- glmer(Employed ~ 1 + PVLITNUM1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
+                  (1 + PVLITNUM1_s + STEM + Training|Country),
                   data = dt, family = binomial(link = "logit"), control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 summary(tmod.ref)
 
  # for PSTRE
 tmod <- glmer(Employed ~ 1 + PVPSL1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
-                GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + PVPSL1_s + Gender|Country),
+              GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + PVPSL1_s + Training|Country),
               data = dt, family = binomial(link = "logit"), control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 summary(tmod)
 AIC(tmod)
 
 
-tmod.ref <- glmer(Employed ~ 1 + PVPSL1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
-                    (1 + PVPSL1_s + Gender|Country),
-                  data = dt, family = binomial(link = "logit"), control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
+tmod.ref <-glmer(Employed ~ 1 + PVPSL1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
+                  (1 + PVPSL1_s + Training|Country),
+                 data = dt, family = binomial(link = "logit"), control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 summary(tmod.ref)
 AIC(tmod.ref)
 
 #-------------------------------------------------
 # export model outputs
-# t = lnm6_ref$Random
+# t = psm7$Fixed
 # write.csv(t, "t.csv", row.names = F)
 
