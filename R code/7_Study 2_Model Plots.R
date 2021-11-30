@@ -8,7 +8,7 @@ library(tidytext)#R package for sorting ggplot plots
 
 ## Data preparation
 # load data
-dt <- read.csv("Data Analysis/Clean Datasets/Study2_piaac_original.csv", stringsAsFactors = T, na.strings = c("NA", ""))
+dt <- read.csv("Data Analysis/Clean Datasets/Study2_piaac.csv", stringsAsFactors = T, na.strings = c("NA", ""))
 
 # prepare data for modeling: log earnings, re-level education reference level
 dt <- dt %>% mutate(LogEarnings = log(Earnings))
@@ -124,7 +124,7 @@ estLITNUM$var = c("(Intercept)", "Literacy + Numeracy", "Male", "Age (30to34)", 
     ylab("OR Estimate (Literacy + Numeracy)") + xlab("Parameter") + 
     geom_hline(yintercept = 1, color = "blue") + coord_flip() + theme_minimal()) 
 
-#(2) Plot random effects: dot plots with 1.39 error bars
+#(2) Plot random effects: dot plots with 1.39 SE error bars
 #model results from refined model with plausible value 1
 lnm6_ref_pv1 <- lmer(LogEarnings ~ 1 + PVLITNUM1_s + Gender + Age + STEM + Education + Training + Experience + Occupation + 
                      GDPPCAP + HSCompletion + Internet + (1 + PVLITNUM1_s + Gender + STEM|Country), data = dt, REML = F)
@@ -141,31 +141,27 @@ rand(lnm6_ref_pv1)
 #   ---
 #   Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-se1 <- coef(summary(lnm6_ref_pv1)) %>% as.data.frame()#SE of random effects as parameters
-r1 <- ranef(lnm6_ref_pv1)$Country %>% 
-  mutate(Country = rownames(.)) %>%
-  rename(LiteracyNumeracy = PVLITNUM1_s, Male = GenderM, STEM = STEMSTEM)%>%
-  pivot_longer(-Country, names_to = "ranef", values_to = "est")%>%
-  mutate(se = case_when(
-    ranef == "(Intercept)" ~ se1["(Intercept)", "Std. Error"],
-    ranef == "LiteracyNumeracy" ~ se1["PVLITNUM1_s", "Std. Error"],
-    ranef == "Male" ~ se1["GenderM", "Std. Error"],
-    ranef == "STEM" ~ se1["STEMSTEM", "Std. Error"]
-  )) %>%
-  mutate(Country = fct_reorder(Country, desc(Country)))
+#extract random effects: as.data.frame() provides random effects and conditional standard deviations
+r1 <- ranef(lnm6_ref_pv1)%>%
+      as.data.frame()%>%
+      mutate(ranef = recode(term, PVLITNUM1_s = "LiteracyNumeracy", GenderM = "Male", STEMSTEM = "STEM"),
+             country = as.character(grp))%>%
+      select(country, ranef, condval, condsd)
 
- #plot of random intercept and slope estimates with ±1.39 SE error bars 
-ggplot(r1, aes(x = Country, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot of random intercept and slope estimates with ±1.39 SE error bars 
+r1 %>% 
+  ggplot(aes(x = country, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
-  ylab("Natural logarithm estimate of hourly earnings") +
+  ylab("Natural logarithm estimate of hourly earnings")+
   xlab(" ") +
   coord_flip() +
   facet_wrap(~ ranef) +
   theme_bw()
 
- #plot - sorted by est
-r1 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
-  ggplot(aes(x = dummy, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot - sorted by estimates
+r1 %>% 
+  mutate(dummy = tidytext::reorder_within(country, condval, ranef))%>%
+  ggplot(aes(x = dummy, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
   facet_wrap(~ ranef, scales = "free_y") +
   coord_flip() +
@@ -219,31 +215,27 @@ rand(psm6_ref_pv1)
 #   ---
 #   Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-se2 <- coef(summary(psm6_ref_pv1)) %>% as.data.frame()#SE of random effects as parameters
-r2 <- ranef(psm6_ref_pv1)$Country %>% 
-  mutate(Country = rownames(.)) %>%
-  rename(PSTRE = PVPSL1_s, Male = GenderM, STEM = STEMSTEM)%>%
-  pivot_longer(-Country, names_to = "ranef", values_to = "est")%>%
-  mutate(se = case_when(
-    ranef == "(Intercept)" ~ se2["(Intercept)", "Std. Error"],
-    ranef == "PSTRE" ~ se2["PVPSL1_s", "Std. Error"],
-    ranef == "Male" ~ se2["GenderM", "Std. Error"],
-    ranef == "STEM" ~ se2["STEMSTEM", "Std. Error"]
-  )) %>%
-  mutate(Country = fct_reorder(Country, desc(Country)))
+#extract random effects: as.data.frame() provides random effects and conditional standard deviations
+r2 <- ranef(psm6_ref_pv1)%>%
+      as.data.frame()%>%
+      mutate(ranef = recode(term, PVPSL1_s = "PSTRE", GenderM = "Male", STEMSTEM = "STEM"),
+             country = as.character(grp))%>%
+      select(country, ranef, condval, condsd)
 
 #plot of random intercept and slope estimates with ±1.39 SE error bars 
-ggplot(r2, aes(x = Country, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+r2 %>% 
+  ggplot(aes(x = country, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
-  ylab("Natural logarithm estimate of hourly earnings") +
+  ylab("Natural logarithm estimate of hourly earnings")+
   xlab(" ") +
   coord_flip() +
   facet_wrap(~ ranef) +
   theme_bw()
 
-#plot - sorted by est
-r2 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
-  ggplot(aes(x = dummy, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot - sorted by estimates
+r2 %>% 
+  mutate(dummy = tidytext::reorder_within(country, condval, ranef)) %>%
+  ggplot(aes(x = dummy, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
   facet_wrap(~ ranef, scales = "free_y") +
   coord_flip() +
@@ -254,5 +246,5 @@ r2 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
 
 #--------------------------------
 #export random effects 
-# write.csv(r1, "r1.csv", row.names = F)
-# write.csv(r2, "r2.csv", row.names = F)
+#write.csv(r1, "r1.csv", row.names = F)
+#write.csv(r2, "r2.csv", row.names = F)
