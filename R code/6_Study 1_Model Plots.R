@@ -93,16 +93,16 @@ pvps =  c("PVPSL1_s", "PVPSL2_s", "PVPSL3_s", "PVPSL4_s", "PVPSL5_s", "PVPSL6_s"
 
 #-----------------------------------
 ## Final GLMM Model Fitting on Literacy and Numeracy
-#2.3 Random intercept and random slope (1 + PVLITNUM + Gender|Country)
-#refined (remove all level 2 variables)
-formu.lnm3.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
-formu.lnm3.d = " + Gender|Country)"
-formu.lnm3.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+# 2.7 Random intercept and random slope (1 + PVLITNUM + Gender + Training|Country)
+ #refined (remove all level 2 variables)
+formu.lnm7.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.lnm7.d = " + Gender + Training|Country)"
+formu.lnm7.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
 
-lnm3_ref = study1Func(a = pvlitnum, b = formu.lnm3.b.ref, c = pvlitnum, d = formu.lnm3.d)
+lnm7_ref = study1Func(a = pvlitnum, b = formu.lnm7.b.ref, c = pvlitnum, d = formu.lnm7.d)
 
 #(1) Plot fixed effects: model estimates and CI
-estLITNUM = lnm3_ref$Fixed %>%
+estLITNUM = lnm7_ref$Fixed %>%
   mutate(conf.low = theta - 1.96*se_new,
          conf.high = theta + 1.96*se_new,
          est.exp = exp(theta),
@@ -120,34 +120,31 @@ estLITNUM$var = c("(Intercept)", "Literacy + Numeracy", "Male", "Age (30to34)", 
 
 #(2) Plot random effects: dot plots with 1.39 error bars
 #model results from refined model with plausible value 1
-lnm3_ref_pv1 <- glmer(Employed ~ 1 + PVLITNUM1_s + Gender + Age + Education + Training + Experience + Occupation + 
-                        (1 + PVLITNUM1_s + Gender|Country), data = dt, family = binomial(link = "logit"),
-                      control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
+lnm7_ref_pv1 <- glmer(Employed ~ 1 + PVLITNUM1_s + Gender + Age + STEM + Education + Training + Experience + Occupation +
+      (1 + PVLITNUM1_s + Gender + Training|Country),data = dt, family = binomial(link = "logit"), 
+      control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 
-se1 <- coef(summary(lnm3_ref_pv1)) %>% as.data.frame()#SE of random effects as parameters
-r1 <- ranef(lnm3_ref_pv1)$Country %>% 
-  mutate(Country = rownames(.)) %>%
-  rename(LiteracyNumeracy = PVLITNUM1_s, Male = GenderM)%>%
-  pivot_longer(-Country, names_to = "ranef", values_to = "est")%>%
-  mutate(se = case_when(
-    ranef == "(Intercept)" ~ se1["(Intercept)", "Std. Error"],
-    ranef == "LiteracyNumeracy" ~ se1["PVLITNUM1_s", "Std. Error"],
-    ranef == "Male" ~ se1["GenderM", "Std. Error"]
-  )) %>%
-  mutate(Country = fct_reorder(Country, desc(Country)))
+#extract random effects: as.data.frame() provides random effects and conditional standard deviations
+r1 <- ranef(lnm7_ref_pv1)%>%
+  as.data.frame()%>%
+  mutate(ranef = recode(term, PVLITNUM1_s = "LiteracyNumeracy", GenderM = "Male"),
+         country = as.character(grp))%>%
+  select(country, ranef, condval, condsd)
 
- #plot of random intercept and slope estimates with ±1.39 SE error bars 
-ggplot(r1, aes(x = Country, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot of random intercept and slope estimates with ±1.39 SE error bars 
+r1 %>% 
+  ggplot(aes(x = country, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
-  ylab("Log odds estimate") +
+  ylab("Log odds estimate")+
   xlab(" ") +
   coord_flip() +
   facet_wrap(~ ranef) +
   theme_bw()
 
- #plot - sorted by est
-r1 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
-  ggplot(aes(x = dummy, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot - sorted by estimates
+r1 %>% 
+  mutate(dummy = tidytext::reorder_within(country, condval, ranef))%>%
+  ggplot(aes(x = dummy, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
   facet_wrap(~ ranef, scales = "free_y") +
   coord_flip() +
@@ -158,16 +155,16 @@ r1 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
 
 #-----------------------------------
 ## Final GLMM Model Fitting on PSTRE
- #3.3 Random intercept and random slope (1 + PVPSL + Gender|Country)
+#3.5 Random intercept and random slope (1 + PVPSL + Training|Country)
  #refined (remove all level 2 variables)
-formu.psm3.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
-formu.psm3.d = " + Gender|Country)"
-formu.psm3.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
+formu.psm5.b = " + Gender + Age + STEM + Education + Training + Experience + Occupation + GDPPCAP + Poverty + HSCompletion + CollegeCompletion + Mobile + Internet + (1 + "
+formu.psm5.d = " + Training|Country)"
+formu.psm5.b.ref = " + Gender + Age + STEM + Education + Training + Experience + Occupation + (1 + "
 
-psm3_ref = study1Func(a = pvps, b = formu.psm3.b.ref, c = pvps, d = formu.psm3.d)
+psm5_ref = study1Func(a = pvps, b = formu.psm5.b.ref, c = pvps, d = formu.psm5.d)
 
 #(1) Plot fixed effects: model estimates and CI
-estPSTRE = psm3_ref$Fixed %>%
+estPSTRE = psm5_ref$Fixed %>%
   mutate(conf.low = theta - 1.96*se_new,
          conf.high = theta + 1.96*se_new,
          est.exp = exp(theta),
@@ -185,36 +182,33 @@ estPSTRE$var = c("(Intercept)", "PSTRE", "Male", "Age (30to34)", "STEM", "Educat
 
 #(2) Plot random effects: dot plots with 1.39 error bars 
 #model results from refined model with plausible value 1
-psm3_ref_pv1 <- glmer(Employed ~ 1 + PVPSL1_s + Gender + Age + STEM + Education + Training + Experience + Occupation + 
-                      (1 + PVPSL1_s + Gender|Country), data = dt, family = binomial(link = "logit"),
+psm5_ref_pv1 <- glmer(Employed ~ 1 + PVPSL1_s + Gender + Age + STEM + Education + Training + Experience + Occupation + 
+                      (1 + PVPSL1_s + Training|Country), data = dt, family = binomial(link = "logit"),
                       control = glmerControl(optimizer = "bobyqa"), nAGQ = 0)
 
-se2 <- coef(summary(psm3_ref_pv1)) %>% as.data.frame()#SE of random effects as parameters
-r2 <- ranef(psm3_ref_pv1)$Country %>% 
-  mutate(Country = rownames(.)) %>%
-  rename(PSTRE = PVPSL1_s, Male = GenderM)%>%
-  pivot_longer(-Country, names_to = "ranef", values_to = "est")%>%
-  mutate(se = case_when(
-    ranef == "(Intercept)" ~ se2["(Intercept)", "Std. Error"],
-    ranef == "PSTRE" ~ se2["PVPSL1_s", "Std. Error"],
-    ranef == "Male" ~ se2["GenderM", "Std. Error"]
-  )) %>%
-  mutate(Country = fct_reorder(Country, desc(Country)))
+#extract random effects: as.data.frame() provides random effects and conditional standard deviations
+r2 <- ranef(psm5_ref_pv1)%>%
+  as.data.frame()%>%
+  mutate(ranef = recode(term, PVPSL1_s = "PSTRE"),
+         country = as.character(grp))%>%
+  select(country, ranef, condval, condsd)
 
 #plot of random intercept and slope estimates with ±1.39 SE error bars 
-ggplot(r2, aes(x = Country, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+r2 %>% 
+  ggplot(aes(x = country, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
-  ylab("Log odds estimate") +
+  ylab("Log odds estimate")+
   xlab(" ") +
   coord_flip() +
-  facet_wrap(~ factor(ranef, c("(Intercept)","PSTRE","Male"))) +
+  facet_wrap(~ ranef) +
   theme_bw()
 
-#plot - sorted by est
-r2 %>% mutate(dummy = tidytext::reorder_within(Country, est, ranef)) %>%
-  ggplot(aes(x = dummy, y = est, ymin = est - 1.39 *se, ymax = est + 1.39*se)) +
+#plot - sorted by estimates
+r2 %>% 
+  mutate(dummy = tidytext::reorder_within(country, condval, ranef)) %>%
+  ggplot(aes(x = dummy, y = condval, ymin = condval - 1.39 *condsd, ymax = condval + 1.39*condsd)) +
   geom_pointrange(size = 0.2) + 
-  facet_wrap(~ factor(ranef, c("(Intercept)","PSTRE","Male")), scales = "free_y") +
+  facet_wrap(~ ranef, scales = "free_y") +
   coord_flip() +
   scale_x_reordered() +
   ylab("Log odds estimate") +
