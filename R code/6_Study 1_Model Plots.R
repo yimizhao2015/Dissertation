@@ -19,7 +19,7 @@ PVU = function(x){return (x^2)}
 
 # define the function for Study 1
 study1Func = function(a, b, c = NULL, d = NULL){
-  #fixed effects statistics (estimate, standard error, and df)
+  #fixed effects statistics (estimate and standard error)
   mod.est = data.frame()
   mod.se = data.frame()
   #random effects statistics (variance and standard deviation)
