@@ -1,5 +1,3 @@
-
-
 library(tidyverse)# R package for data manipulation
 
 # load data
@@ -50,5 +48,4 @@ pstre = dt%>%select(PVPSL1:PVPSL10)%>%
             sd= sd(value, na.rm = T))
 
 mean(pstre$mean); mean(pstre$sd)
-
 
